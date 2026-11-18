@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Disponibilité</title>
+<style>
+  :root { --bg: #f6f5f2; --card: #fff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e3e1db; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151514; --card: #1f1f1d; --ink: #f1efe9; --muted: #a09e97; --line: #333330; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; max-width: 420px; width: 100%; text-align: center; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .info { background: var(--bg); border-radius: 12px; padding: 14px 16px; margin: 18px 0; font-weight: 600; }
+  .info small { display: block; color: var(--muted); font-weight: 400; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button { padding: 16px 10px; font: inherit; font-weight: 650; border-radius: 12px; border: 0; cursor: pointer; color: #fff; }
+  .oui { background: #1f9d4d; } .non { background: #d33; }
+  button:disabled { opacity: .5; }
+  .done { font-size: 44px; margin-bottom: 4px; }
+  a { color: var(--muted); font-size: 14px; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="card" id="root"><p class="muted">Chargement…</p></div>
+<script>
+const token = new URLSearchParams(location.search).get("t");
+const root = document.getElementById("root");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let info = null;
+
+function view() {
+  const head = `<h1>Bonjour ${esc(info.prenom)} 👋</h1><p class="muted">Es-tu disponible ?</p>
+    <div class="info">${info.client ? `<small>Client</small>${esc(info.client)}<br><br>` : ""}<small>${info.dates.length > 1 ? "Dates" : "Date"}</small>${esc(info.datesTexte)}</div>`;
+  if (info.statut === "confirme" || info.statut === "refuse") {
+    const ok = info.statut === "confirme";
+    root.innerHTML = head + `<div class="done">${ok ? "✅" : "👍"}</div>
+      <p><b>${ok ? "C'est noté, tu es disponible. Merci !" : "C'est noté, tu n'es pas disponible. Merci de ta réponse !"}</b></p>
+      <a id="change">Changer ma réponse</a>`;
+    document.getElementById("change").onclick = () => { info.statut = "en_attente"; view(); };
+  } else {
+    root.innerHTML = head + `<div class="btns"><button class="oui" id="oui">Oui, dispo</button><button class="non" id="non">Pas dispo</button></div><p class="muted" id="err" style="margin-top:14px"></p>`;
+    document.getElementById("oui").onclick = () => answer("oui");
+    document.getElementById("non").onclick = () => answer("non");
+  }
+}
+
+async function answer(reponse) {
+  root.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  try {
+    const r = await fetch("/api/reponse", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token, reponse }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    info.statut = d.statut;
+    view();
+  } catch {
+    root.querySelectorAll("button").forEach((b) => (b.disabled = false));
+    document.getElementById("err").textContent = "Un problème est survenu, réessaie dans un instant.";
+  }
+}
+
+(async () => {
+  if (!token) { root.innerHTML = "<h1>Lien invalide</h1>"; return; }
+  try {
+    const r = await fetch("/api/reponse?t=" + encodeURIComponent(token));
+    if (!r.ok) throw 0;
+    info = await r.json();
+    view();
+  } catch { root.innerHTML = "<h1>Lien invalide</h1><p class='muted'>Ce lien n'existe plus ou a été modifié.</p>"; }
+})();
+</script>
+</body>
+</html>

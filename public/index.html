@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Planning intermittents</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="login" class="card">
+  <h2>Planning intermittents</h2>
+  <label for="pwd">Mot de passe</label>
+  <input id="pwd" type="password" autocomplete="current-password">
+  <div class="err" id="loginErr"></div>
+  <button class="btn primary" id="loginBtn" style="width:100%">Entrer</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>Planning intermittents</h1>
+    <nav id="nav">
+      <button data-tab="cal" class="on">Calendrier</button>
+      <button data-tab="new">Nouvelle prestation</button>
+      <button data-tab="base">Base de données</button>
+    </nav>
+    <button class="btn small" data-act="logout" style="margin-left:auto">Déconnexion</button>
+  </header>
+  <main>
+    <section id="tab-cal"></section>
+    <section id="tab-new" class="hidden">
+      <div class="card">
+        <h2>Nouvelle prestation</h2>
+        <p class="muted" style="margin-top:0">Colle le texte du devis, ou dépose le PDF : le texte en est extrait dans ton navigateur (rien n'est envoyé à un service externe). Tu vérifies et corriges avant de créer.</p>
+        <textarea id="devisTxt" rows="10" placeholder="Colle ici le texte du devis…"></textarea>
+        <div class="row" style="margin-top:10px">
+          <input type="file" id="devisPdf" accept="application/pdf">
+          <button class="btn primary" data-act="analyser">Analyser le texte</button>
+          <button class="btn" data-act="manuel">Saisir sans devis</button>
+        </div>
+      </div>
+      <div id="draftZone"></div>
+    </section>
+    <section id="tab-base" class="hidden"></section>
+  </main>
+</div>
+
+<div id="modal" class="overlay"><div class="sheet" id="sheet"></div></div>
+<div id="dialog" class="overlay"><div class="sheet" id="dlgSheet" style="max-width:520px"></div></div>
+<datalist id="dl-salles"></datalist>
+<div id="toast"></div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>
